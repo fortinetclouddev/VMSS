@@ -1,0 +1,292 @@
+{
+  "handler": "Microsoft.Compute.MultiVm",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "VMScaleSetName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Name of VM Scale Set",
+        "toolTip": "FortiGate appliances and other resources will be based on this name.",
+        "constraints": {
+          "required": true,
+          "regex": "^[A-Za-z0-9]{1,15}$",
+          "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1 to 15 characters."
+        }
+      },
+      {
+        "name": "skuSelectorElement",
+        "type": "Microsoft.Common.OptionsGroup",
+        "label": "PAYG/BYOL License",
+        "toolTip": "Select PAYG for on-demand/hourly billing of the FortiGate license, or BYOL to obtain a license from Fortinet separately.",
+        "defaultValue": "PAYG 5.6",
+        "constraints": {
+          "allowedValues": [
+            {
+              "label": "BYOL 5.4.8",
+              "value": {
+                "SKU": "fortinet_fg-vm",
+                "Version": "5.4.8"
+              }
+            },
+            {
+              "label": "BYOL 5.6.3",
+              "value": {
+                "SKU": "fortinet_fg-vm",
+                "Version": "5.6.3"
+              }
+            },
+            {
+              "label": "BYOL 6.0.0",
+              "value": {
+                "SKU": "fortinet_fg-vm",
+                "Version": "6.0.0"
+              }
+            },
+            {
+              "label": "PAYG 5.4.6",
+              "value": {
+                "SKU": "fortinet_fg-vm_payg",
+                "Version": "5.4.6"
+              }
+            },
+            {
+              "label": "PAYG 5.6.3",
+              "value": {
+                "SKU": "fortinet_fg-vm_payg",
+                "Version": "5.6.3"
+              }
+            },
+            {
+              "label": "PAYG 6.0.0",
+              "value": {
+                "SKU": "fortinet_fg-vm_payg",
+                "Version": "6.0.0"
+              }
+            }
+          ]
+        }
+},
+      {
+        "name": "adminUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "FortiGate administrative username",
+        "toolTip": "Admin username for the FortiGate virtual appliance. Must not be 'admin' nor 'root'.",
+        "osPlatform": "Linux",
+        "constraints": {
+          "required": true
+        }
+      },
+      {
+        "name": "passwordElement",
+        "type": "Microsoft.Common.PasswordBox",
+        "label": {
+          "password": "FortiGate Password",
+          "confirmPassword": "Confirm Password"
+        },
+        "toolTip": "Admin account password for the Virtual FortiGate",
+        "constraints": {
+          "required": true,
+          "regex": "^(?:(?=.*[a-z])(?:(?=.*[A-Z])(?=.*[\\d\\W])|(?=.*\\W)(?=.*\\d))|(?=.*\\W)(?=.*[A-Z])(?=.*\\d)).{12,123}$",
+          "validationMessage": "The password must be between 6 and 123 characters long, and contain characters from at least 3 of the following groups: uppercase characters, lowercase characters, numbers, and special characters."
+        },
+        "options": {
+          "hideConfirmation": false
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "NetworkandInstanceConfig",
+        "label": "Virtual Network & Instance Settings",
+        "subLabel": {
+          "preValidation": "Configure the network options and select instance type",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Network & Instance Settings",
+        "elements": [
+          {
+            "name": "virtualNetwork",
+            "type": "Microsoft.Network.VirtualNetworkCombo",
+            "label": {
+              "virtualNetwork": "Virtual network",
+              "subnets": "Subnets"
+            },
+            "toolTip": {
+              "virtualNetwork": "Virtual Network Name",
+              "subnets": "Subnets requied for the FortiGate solution"
+            },
+            "defaultValue": {
+              "name": "FortigateProtectedVNet",
+              "addressPrefixSize": "/16"
+            },
+            "constraints": {
+              "minAddressPrefixSize": "/28"
+            },
+            "subnets": {
+              "subnet1": {
+                "label": "Outside/Entry Subnet",
+                "defaultValue": {
+                  "name": "EntrySubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/28",
+                  "minAddressCount": 10,
+                  "requireContiguousAddresses": false
+                }
+              },
+              "subnet2": {
+                "label": "Transit/Internal Subnet",
+                "defaultValue": {
+                  "name": "TransitSubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/28",
+                  "minAddressCount": 11,
+                  "requireContiguousAddresses": false
+                }
+              },
+              "subnet3": {
+                "label": "Hosts/Protected Subnet",
+                "defaultValue": {
+                  "name": "ProtectedSubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/29",
+                  "minAddressCount": 1,
+                  "requireContiguousAddresses": false
+                }
+              }
+            }
+          },
+          {
+            "name": "vmSize",
+            "type": "Microsoft.Compute.SizeSelector",
+            "label": "Virtual machine size",
+            "toolTip": "The size of virtual machine to provision.",
+            "recommendedSizes": [
+              "Standard_F1",
+              "Standard_F2"
+            ],
+            "constraints": {
+              "allowedSizes": [
+                "Standard_F1",
+                "Standard_F2",
+                "Standard_F4",
+                "Standard_F8",
+                "Standard_F16",
+                "Standard_F1s",
+                "Standard_F2s",
+                "Standard_F4s",
+                "Standard_F8s",
+                "Standard_F16s"
+              ]
+            },
+            "osPlatform": "Linux",
+            "imageReference": {
+              "publisher": "Fortinet",
+              "offer": "fortinet_fortigate-vm_v5",
+              "sku": "fortinet_fg-vm"
+            },
+            "count": "1"
+          }
+        ]
+      },
+      {
+        "name": "IPConfig",
+        "label": "FortiGate IP Address Assignments",
+        "subLabel": {
+          "preValidation": "Configure the Public IP and the IP Addresses for each NIC on the FortiGate",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "IP Assignment",
+        "elements": [
+          {
+            "name": "publicIpAddress",
+            "type": "Microsoft.Network.PublicIpAddressCombo",
+            "label": {
+              "publicIpAddress": "Public IP address name",
+              "domainNameLabel": ""
+            },
+            "toolTip": {
+              "publicIpAddress": "Name of the public IP address object"
+            },
+            "defaultValue": {
+              "publicIpAddressName": "publicip-fortigate-vmss"
+            },
+            "constraints": {
+              "required": {
+                "domainNameLabel": false
+              }
+            },
+            "options": {
+              "hideNone": true,
+              "hideDomainNameLabel": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "VMSS Parameters",
+        "label": "Autoscale Settings",
+        "subLabel": {
+          "preValidation": "Configure Autoscale settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Autoscale Settings",
+        "elements": [
+          {
+            "name": "publicIpAddress",
+            "type": "Microsoft.Network.PublicIpAddressCombo",
+            "label": {
+              "publicIpAddress": "Public IP address name",
+              "domainNameLabel": ""
+            },
+            "toolTip": {
+              "publicIpAddress": "Name of the public IP address object"
+            },
+            "defaultValue": {
+              "publicIpAddressName": "publicip-fortigate-vmss"
+            },
+            "constraints": {
+              "required": {
+                "domainNameLabel": false
+              }
+            },
+            "options": {
+              "hideNone": true,
+              "hideDomainNameLabel": true
+            }
+          }
+        ],
+    ],
+    "outputs": {
+      "FortiGateName": "[basics('VMName')]",
+      "adminUsername": "[basics('adminUsername')]",
+      "adminPassword": "[basics('passwordElement')]",
+      "instanceType": "[steps('StorageNetworkConfig').vmSize]",
+      "publicIPAddressName": "[steps('IPConfig').publicIpAddress.name]",
+      "publicIPAddressType": "[steps('IPConfig').publicIPAddressTypeElement]",
+      "publicIPNewOrExistingOrNone": "[steps('IPConfig').publicIpAddress.newOrExistingOrNone]",
+      "publicIPResourceGroup": "[steps('IPConfig').publicIpAddress.resourceGroup]",
+      "fortiGateIP1": "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet1.startAddress]",
+      "fortiGateIP2": "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet2.startAddress]",
+      "StorageAccountName": "[steps('StorageNetworkConfig').storageAccount.name]",
+      "StorageAccountType": "[steps('StorageNetworkConfig').storageAccount.type]",
+      "storageAccountNewOrExisting": "[steps('StorageNetworkConfig').storageAccount.newOrExisting]",
+      "storageAcctResourceGroup": "[steps('StorageNetworkConfig').storageAccount.resourceGroup]",
+      "location": "[location()]",
+      "vnetNewOrExisting": "[steps('StorageNetworkConfig').virtualNetwork.newOrExisting]",
+      "vnetName": "[steps('StorageNetworkConfig').virtualNetwork.name]",
+      "vnetResourceGroup":  "[steps('StorageNetworkConfig').virtualNetwork.resourceGroup]",
+      "vnetAddressPrefix" : "[steps('StorageNetworkConfig').virtualNetwork.addressPrefix]",
+      "Subnet1Name" : "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet1.name]",
+      "Subnet1Prefix" : "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+      "Subnet2Name" : "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet2.name]",
+      "Subnet2Prefix": "[steps('StorageNetworkConfig').virtualNetwork.subnets.subnet2.addressPrefix]"
+    }
+  }
+}
